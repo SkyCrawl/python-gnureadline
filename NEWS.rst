@@ -1,6 +1,14 @@
 History
 =======
 
+6.3.4 (2014-04-08)
+------------------
+
+The included GNU readline library and the code building it have been
+deleted. This module now assumes that the library is installed on the
+system and that the installation path is given via the environmental
+variable RL_PATH.
+
 6.3.3 (2014-04-08)
 ------------------
 

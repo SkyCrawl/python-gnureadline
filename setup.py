@@ -4,19 +4,15 @@ import os
 import sys
 from distutils.command.build_ext import build_ext
 import subprocess
-
 from setuptools import setup, Extension
 
-if sys.platform == 'win32':
-    sys.exit('Error: this module is not meant to work on Windows (try pyreadline instead)')
-elif sys.platform == 'cygwin':
-    sys.exit('Error: this module is not needed for Cygwin (and probably does not compile anyway)')
-
+# Basic variables:
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
 NEWS = open(os.path.join(here, 'NEWS.rst')).read()
 
-VERSION = '6.3.3'
+# Module info:
+VERSION = '6.3.4'
 DESCRIPTION = 'The standard Python readline extension statically linked against the GNU readline library.'
 LONG_DESCRIPTION = README + '\n\n' + NEWS
 CLASSIFIERS = [
@@ -32,8 +28,8 @@ CLASSIFIERS = [
     'Topic :: Software Development :: Libraries :: Python Modules',
 ]
 
-# Since we have the latest readline (post 4.2), enable all readline functionality
-# These macros can be found in pyconfig.h.in in the main directory of the Python tarball
+# Since we assume readline >= 4.2, enable all readline functionality.
+# Note: these macros can be found in 'pyconfig.h.in' in the main directory of the Python tarball.
 DEFINE_MACROS = [
     ('HAVE_RL_APPEND_HISTORY', None),
     ('HAVE_RL_CALLBACK', None),
@@ -45,40 +41,20 @@ DEFINE_MACROS = [
     ('HAVE_RL_PRE_INPUT_HOOK', None),
 ]
 
+# Platform check:
+if sys.platform == 'win32':
+    sys.exit('Error: this module is not meant to work on Windows (try pyreadline instead)')
+elif sys.platform == 'cygwin':
+    sys.exit('Error: this module is not needed for Cygwin (and probably does not compile anyway)')
 
-def which_shell():
-    valid_paths = ["/bin/bash", "/usr/local/bin/bash", "/bin/sh"]
-    for path in valid_paths:
-        if os.path.exists(path):
-            return path
-    raise IOError("No Shell Found")
+# Input check:
+rl_path = os.environ.get('RL_PATH')
+if rl_path == None:
+	sys.exit('Error: this setup.py expects an RL_PATH environmental variable. It must point to the directory where readline is installed on the system. E.g. if \'<path>\'/lib/libreadline.a\' exists, then \'<path>\' should be passed.')
+elif not os.path.exists(os.path.join(rl_path, 'lib/libreadline.a')):
+	sys.exit('Error: the RL_PATH environmental variable\'s value is not correct.')
 
-# Check if any of the distutils commands involves building the module,
-# and check for quiet vs. verbose option
-building = False
-verbose = True
-for s in sys.argv[1:]:
-    if s.startswith('bdist') or s.startswith('build') or s.startswith('install'):
-        building = True
-    if s in ['--quiet', '-q']:
-        verbose = False
-    if s in ['--verbose', '-v']:
-        verbose = True
-
-# Build readline first, if it is not there and we are building the module
-if building and not os.path.exists('readline/libreadline.a'):
-    shell_path = which_shell()
-    if verbose:
-        print("\n============ Building the readline library ============\n")
-        os.system('cd rl && %s ./build.sh' % shell_path)
-        print("\n============ Building the readline extension module ============\n")
-    else:
-        os.system('cd rl && %s ./build.sh > /dev/null 2>&1' % shell_path)
-    # Add symlink that simplifies include and link paths to real library
-    if not (os.path.exists('readline') or os.path.islink('readline')):
-        os.symlink(os.path.join('rl','readline-lib'), 'readline')
-
-# Workaround for OS X 10.9.2 and Xcode 5.1+
+# Workaround for OS X 10.9.2 and Xcode 5.1+.
 # The latest clang treats unrecognized command-line options as errors and the
 # Python CFLAGS variable contains unrecognized ones (e.g. -mno-fused-madd).
 # See Xcode 5.1 Release Notes (Compiler section) and
@@ -100,11 +76,13 @@ class build_ext_subclass(build_ext):
                     ext.extra_compile_args += ['-Wno-error=unused-command-line-argument-hard-error-in-future']
         build_ext.build_extensions(self)
 
-# First try version-specific readline.c, otherwise fall back to major-only version
+# Determine the target readline.
+# Try version-specific 'readline.c' or fall back to major-only version.
 source = os.path.join('Modules', '%d.%d' % sys.version_info[:2], 'readline.c')
 if not os.path.exists(source):
     source = os.path.join('Modules', '%d.x' % (sys.version_info[0],), 'readline.c')
 
+# Setup the module/extension.
 setup(
     name="gnureadline",
     version=VERSION,
@@ -122,9 +100,9 @@ setup(
     ext_modules=[
         Extension(name="gnureadline",
                   sources=[source],
-                  include_dirs=['.'],
+                  include_dirs=[os.path.join(rl_path, 'include')],
                   define_macros=DEFINE_MACROS,
-                  extra_objects=['readline/libreadline.a', 'readline/libhistory.a'],
+                  extra_objects=[os.path.join(rl_path, 'lib/libreadline.a'), os.path.join(rl_path, 'lib/libhistory.a')],
                   libraries=['ncurses']
         ),
     ],

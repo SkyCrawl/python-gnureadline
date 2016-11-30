@@ -1,4 +1,9 @@
-Stand-alone GNU readline module
+This is a fork of the `original python-gnureadline`_. Sole changes are:
+
+1. The included GNU readline library and the code building it have been deleted.
+2. The module now expects that GNU readline is installed on the system and that the installation path is given via the environmental variable 'RL_PATH'.
+
+Original README: stand-alone GNU readline module
 ===============================
 
 Some platforms, such as Mac OS X, do not ship with `GNU readline`_ installed.
@@ -34,10 +39,11 @@ not include GNU readline due to licensing restrictions (such as ActiveState's
 `ActivePython`_). If you are using Windows, which also ships without GNU 
 readline, you might want to consider using the `pyreadline`_ module instead, 
 which is a readline replacement written in pure Python that interacts with the
-Windows clipboard. 
+Windows clipboard.
 
 The latest development version is available from the `GitHub repository`_.
 
+.. _original python-gnureadline: https://github.com/ludwigschwardt/python-gnureadline
 .. _GNU readline: http://www.gnu.org/software/readline/
 .. _editline: http://www.thrysoee.dk/editline/
 .. _pip: http://www.pip-installer.org/

@@ -1,9 +1,4 @@
-# Test across all Python versions (see tox.ini)
-test:
-	tox
-
 clean:
-	-rm -rf build dist rl/readline-lib
+	-rm -rf build dist
 
-.PHONY: test clean
-
+.PHONY: clean
